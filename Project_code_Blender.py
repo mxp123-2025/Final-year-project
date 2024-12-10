@@ -1,5 +1,8 @@
 import random
 import math
+import subprocess
+import sys
+
 CardHeight=0.89
 CardLength=0.64
 CardWidth=0.002
@@ -12,8 +15,38 @@ Height_F_Cards=[]
 Z_Distance_F_Cards=[]
 Stored_Flat_Cards=[]
 Left_Card_Locations=[]
-usedInts=[]
-choice=0
+f = open('blenderScript.txt', 'w')
+#f.truncate(0) # need '0' when using r+
+f.write("import bpy\n")
+f.write("import math\n")
+f.close()
+
+def run_blender():
+    f = open('blenderScript.txt', 'a')
+    f.write("import bpy\n")
+    # Assuming the simulation is controlled via some operator or function in Blender
+    # Example: if you're using physics simulation, this could be something like:
+    f.write("bpy.ops.screen.animation_play()\n")  # Start animation (or start your simulation)
+    f.close()
+    # Path to Blender executable on macOS
+    blender_path = "/Applications/Blender.app/Contents/MacOS/Blender"
+    blend_file = "cardSimulation.blender.blend"
+    python_script = "blenderScript.txt"
+    # Construct the command to run Blender in the background with the Python script
+    # Running Blender from the terminal using subprocess
+    subprocess.run([blender_path, blend_file, "-P", python_script])
+    
+
+def reset():
+    avaliable=cardOptions.copy()
+    Heights_of_Cards.clear()
+    Distance_Base.clear()
+    pointDistance.clear()
+    Height_F_Cards.clear()
+    Z_Distance_F_Cards.clear()
+    Stored_Flat_Cards.clear()
+    Left_Card_Locations.clear()
+    choice=0
 
 cardOptions=['Queen_of_Dimonds','King_of_Dimonds','Queen_of_Hearts','King_of_Clubs',
              'Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_of_Spades','6_of_Spades','7_of_Spades','8_of_Spades','9_of_Spades','10_of_Spades','Jack_of_Spades',
@@ -27,11 +60,20 @@ cardOptionsLarge=['Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_o
             '9_of_Dimondonds','10_of_Dimondonds','Jack_of_Dimondonds','Queen_of_Dimondonds','King_of_Dimondonds','Ace_of_Clubs','2_of_Clubs','3_of_Clubs','4_of_Clubs','5_of_Clubs',
             '6_of_Clubs','7_of_Clubs','8_of_Clubs','9_of_Clubs','10_of_Clubs','Jack_of_Clubs','Queen_of_Clubs','King_of_Clubs']
 def cardDeck():
-    x=0
+    f = open('blenderScript.txt', 'a')
+    #f.truncate(0)
     for i in range (0,len(avaliable)):
         print("bpy.context.collection.objects['"+avaliable[i]+"'].rotation_euler=(math.radians( 90 ),0,0)")
-        print("bpy.context.collection.objects['"+avaliable[i]+"'].location=(0.73164,-1.2662 ,",(x*CardWidth)+CardWidth/2,")")
-        x=x+1
+        print("bpy.context.collection.objects['"+avaliable[i]+"'].location=(0.73164,-1.2662 ,",(i*CardWidth)+CardWidth/2,")")
+        f.write("bpy.context.collection.objects['")
+        f.write(avaliable[i])
+        f.write("'].rotation_euler=(math.radians( 90 ),0,0)\n")
+        f.write("bpy.context.collection.objects['")
+        f.write(avaliable[i])
+        f.write("'].location=(0.73164,-1.2662 ,")
+        f.write(str((i*CardWidth)+CardWidth/2))
+        f.write(")\n")
+    f.close()
         
 def randomCard():
     cardChoice2 = random.randint(0,len(cardOptionsLarge)-1)
@@ -95,10 +137,24 @@ def Z_location(i,card, Last_Angle,Height_of_Last_Card, start_Position,Opposite,a
     #print("The height of this card from the Z axis is:",Z_Distance)
     #print("The distance of this card from the LEFT object is:",LeftDistance)
     #print("The Blender code is:")
-        
 
+    f = open('blenderScript.txt', 'a')
+    #f.truncate(0)
     print("bpy.context.collection.objects['"+card+"'].rotation_euler=(math.radians(",angle,"),0,0)")
     print("bpy.context.collection.objects['"+card+"'].location=(0,",Next_Start_Position,",",Z_Distance,")")
+    f.write("bpy.context.collection.objects['")
+    f.write(card)
+    f.write("'].rotation_euler=(math.radians(")
+    f.write(str(angle))
+    f.write("),0,0)\n")
+    f.write("bpy.context.collection.objects['")
+    f.write(card)
+    f.write("'].location=(0,")
+    f.write(str(Next_Start_Position))
+    f.write(",")
+    f.write(str(Z_Distance))
+    f.write(")\n")
+    f.close()
     return angleRadians,Height_of_Current_Card,Next_Start_Position
    
 def Across(anglesChoosen,numCards):
@@ -130,13 +186,16 @@ def Across(anglesChoosen,numCards):
         Across(anglesChoosen[numCards:],numCards-2)
     cardDeck()
      
-    #print("Heights_of_Flat_Cards",Height_F_Cards)    
+    #print("Heights_of_Flat_Cards",Height_F_Cards)
+    reset()
     answer=input("want to run again? (press 1 for YES)")
     if(answer=="1"):
         choice2=int(input("how many cards are you using for the bottom row"))
-        angles,numCards=chooseAngles(choice2)
-        if(numCards!=0):
-            Across(angles,numCards)
+        
+        angles,numCards=chooseAngles(standing_cards(choice2))
+        Across(angles,choice2)
+    else:    
+        run_blender()
 
         
 def flat_Cards():
@@ -144,6 +203,7 @@ def flat_Cards():
     for i in range(0,len(pointDistance)-1):
         Height_F_Cards[i]=((Heights_of_Cards[i] +Heights_of_Cards[i+1])/2)+CardWidth+Distance_Base[i]
         Z_Distance_F_Cards[i]=(((Heights_of_Cards[i] +Heights_of_Cards[i+1])/2)+CardWidth/2)+Distance_Base[i]
+        Stored_Flat_Cards.append(Z_Distance_F_Cards[i])
         if(Heights_of_Cards[i] - Heights_of_Cards[i+1]!=0):
             angle_F=math.atan(pointDistance[i]/(Heights_of_Cards[i] - Heights_of_Cards[i+1]))/radiansConvert
         else:
@@ -151,7 +211,25 @@ def flat_Cards():
         card=randomCard()
         print("bpy.context.collection.objects['"+card+"'].rotation_euler=(math.radians(",angle_F,"),0,0)")
         print("bpy.context.collection.objects['"+card+"'].location=(0,",Left_Card_Locations[i]+pointDistance[i]/2,",",Z_Distance_F_Cards[i],")")
-    Stored_Flat_Cards.append(Z_Distance_F_Cards)
+        f = open('blenderScript.txt', 'a')
+        #f.truncate(0)
+        f.write("bpy.context.collection.objects['")
+        f.write(card)
+        f.write("'].rotation_euler=(math.radians(")
+        f.write(str(angle_F))
+        f.write("),0,0)\n")
+        f.write("bpy.context.collection.objects['")
+        f.write(card)
+        f.write("'].location=(0,")
+        f.write(str(Left_Card_Locations[i]+pointDistance[i]/2))
+        f.write(",")
+        f.write(str(Z_Distance_F_Cards[i]))
+        f.write(")\n")
+        f.close()
+        
+        if len(avaliable)<=0:
+            return
+    
         
     
 totalCards=0
@@ -162,28 +240,33 @@ choice=int(input("how many cards are you using for the bottom row"))
 while(choice>len(cardOptions)):
     print("we dont have enough cards for that")
     choice=int(input("how many cards are you using for the bottom row"))
-    
-for x in range(0,(choice//2)):
-    Height_F_Cards.append(0)
-    Z_Distance_F_Cards.append(0)
-    if totalCards+choice-2*x<len(cardOptions):
-        total_standing=total_standing+choice-2*x
-        totalCards=totalCards+choice-2*x
-    else:
-        total_standing=total_standing+len(cardOptions)-totalCards
-        totalCards=len(cardOptions)
-        x=100
-    if totalCards<len(cardOptions):
-        if totalCards-x-1+choice/2<len(cardOptions):
-            total_flat=total_flat-x-1+choice/2
-            totalCards=totalCards-x-1+choice/2
+
+def standing_cards(choice):
+    totalCards=0
+    total_standing=0
+    total_flat=0
+    for x in range(0,(choice//2)):
+        Height_F_Cards.append(0)
+        Z_Distance_F_Cards.append(0)
+        if totalCards+choice-2*x<len(cardOptions):
+            total_standing=total_standing+choice-2*x
+            totalCards=totalCards+choice-2*x
         else:
-            total_flat=total_flat+len(cardOptions)-totalCards
+            total_standing=total_standing+len(cardOptions)-totalCards
             totalCards=len(cardOptions)
             x=100
-    
+        if totalCards<len(cardOptions):
+            if totalCards-x-1+choice/2<len(cardOptions):
+                total_flat=total_flat-x-1+choice/2
+                totalCards=totalCards-x-1+choice/2
+            else:
+                total_flat=total_flat+len(cardOptions)-totalCards
+                totalCards=len(cardOptions)
+                x=100
 
-        
+    return int(total_standing)
+
+total_standing=standing_cards(choice)        
 print(totalCards)
 print(total_standing)
 print(total_flat)
