@@ -158,22 +158,27 @@ def Z_location(i,card, Last_Angle,Height_of_Last_Card, start_Position,Opposite,a
     return angleRadians,Height_of_Current_Card,Next_Start_Position
    
 def Across(anglesChoosen,numCards):
+    using=0
     if len(avaliable)==0:
         return
+    if (numCards>len(avaliable)):
+        using=len(avaliable)
+    else:
+        using=numCards
     Height_of_Card=1000
     Last_Angle=0
-    for i in range(0,numCards):
-        if(i==0):
+    for i in range(0,using):
+        if(i==0 ):
             location_from_Y=0
-        if(i%2==0):
+        if(i%2==0 ):
             Last_Angle,Height_of_Card,location_from_Y= Z_location(i//2,randomCard(),Last_Angle,Height_of_Card,location_from_Y,True,anglesChoosen[i])
-        else:
+        else :
             Last_Angle,Height_of_Card,location_from_Y= Z_location(i//2,randomCard(),Last_Angle,Height_of_Card,location_from_Y,False,anglesChoosen[i])      
     #print(anglesChoosen)
     #print(pointDistance)
     #print(Heights_of_Cards)
     if len(avaliable)==0:
-        return        
+        return
     flat_Cards()
     
     Heights_of_Cards.clear()
@@ -199,7 +204,6 @@ def Across(anglesChoosen,numCards):
 
         
 def flat_Cards():
-
     for i in range(0,len(pointDistance)-1):
         Height_F_Cards[i]=((Heights_of_Cards[i] +Heights_of_Cards[i+1])/2)+CardWidth+Distance_Base[i]
         Z_Distance_F_Cards[i]=(((Heights_of_Cards[i] +Heights_of_Cards[i+1])/2)+CardWidth/2)+Distance_Base[i]
@@ -236,10 +240,12 @@ totalCards=0
 total_standing=0
 total_flat=0
 print(len(cardOptions))
-choice=int(input("how many cards are you using for the bottom row"))
+choice=int(input("how many pairs of cards are you using for the bottom row"))
+choice=choice*2
 while(choice>len(cardOptions)):
     print("we dont have enough cards for that")
     choice=int(input("how many cards are you using for the bottom row"))
+    choice=choice*2
 
 def standing_cards(choice):
     totalCards=0
