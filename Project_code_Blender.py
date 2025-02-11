@@ -23,7 +23,6 @@ f.close()
 
 def run_blender():
     f = open('blenderScript.txt', 'a')
-    f.write("import bpy\n")
     # Assuming the simulation is controlled via some operator or function in Blender
     # Example: if you're using physics simulation, this could be something like:
     f.write("bpy.ops.screen.animation_play()\n")  # Start animation (or start your simulation)
@@ -48,10 +47,10 @@ def reset():
     Left_Card_Locations.clear()
     choice=0
 
-cardOptions=['Queen_of_Dimonds','King_of_Dimonds','Queen_of_Hearts','King_of_Clubs',
+cardOptions=['Queen_of_Dimonds','King_of_Dimonds','Queen_of_Hearts','King_of_Clubs','King_of_Hearts',
              'Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_of_Spades','6_of_Spades','7_of_Spades','8_of_Spades','9_of_Spades','10_of_Spades','Jack_of_Spades',
              'Queen_of_Spades','King_of_Spades']
-avaliable=['Queen_of_Dimonds','King_of_Dimonds','Queen_of_Hearts','King_of_Clubs',
+avaliable=['Queen_of_Dimonds','King_of_Dimonds','Queen_of_Hearts','King_of_Hearts','King_of_Clubs',
              'Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_of_Spades','6_of_Spades','7_of_Spades','8_of_Spades','9_of_Spades','10_of_Spades','Jack_of_Spades',
              'Queen_of_Spades','King_of_Spades']
 cardOptionsLarge=['Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_of_Spades','6_of_Spades','7_of_Spades','8_of_Spades','9_of_Spades','10_of_Spades','Jack_of_Spades','Queen_of_Spades',
