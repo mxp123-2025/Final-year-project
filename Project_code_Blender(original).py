@@ -15,6 +15,8 @@ Height_F_Cards=[]
 Z_Distance_F_Cards=[]
 Stored_Flat_Cards=[]
 Left_Card_Locations=[]
+choice=0
+first_card_last_row=0 #just addedddd!!!
 f = open('blenderScript.txt', 'w')
 #f.truncate(0) # need '0' when using r+
 f.write("import bpy\n")
@@ -23,7 +25,6 @@ f.close()
 
 def run_blender():
     f = open('blenderScript.txt', 'a')
-    f.write("import bpy\n")
     # Assuming the simulation is controlled via some operator or function in Blender
     # Example: if you're using physics simulation, this could be something like:
     f.write("bpy.ops.screen.animation_play()\n")  # Start animation (or start your simulation)
@@ -48,23 +49,21 @@ def reset():
     Left_Card_Locations.clear()
     choice=0
 
-cardOptions=['Queen_of_Dimonds','King_of_Dimonds','Queen_of_Hearts','King_of_Clubs',
+cardOptionsShort=['Ace_of_Dimonds','Queen_of_Dimonds','King_of_Dimonds','Queen_of_Hearts','King_of_Clubs','King_of_Hearts',
              'Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_of_Spades','6_of_Spades','7_of_Spades','8_of_Spades','9_of_Spades','10_of_Spades','Jack_of_Spades',
              'Queen_of_Spades','King_of_Spades']
-avaliable=['Queen_of_Dimonds','King_of_Dimonds','Queen_of_Hearts','King_of_Clubs',
-             'Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_of_Spades','6_of_Spades','7_of_Spades','8_of_Spades','9_of_Spades','10_of_Spades','Jack_of_Spades',
-             'Queen_of_Spades','King_of_Spades']
-cardOptionsLarge=['Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_of_Spades','6_of_Spades','7_of_Spades','8_of_Spades','9_of_Spades','10_of_Spades','Jack_of_Spades','Queen_of_Spades',
+cardOptions=['Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_of_Spades','6_of_Spades','7_of_Spades','8_of_Spades','9_of_Spades','10_of_Spades','Jack_of_Spades','Queen_of_Spades',
             'King_of_Spades','Ace_of_Hearts','2_of_Hearts','3_of_Hearts','4_of_Hearts','5_of_Hearts','6_of_Hearts','7_of_Hearts','8_of_Hearts','9_of_Hearts','10_of_Hearts','Jack_of_Hearts',
-            'Queen_of_Hearts','King_of_Hearts','Ace_of_Dimondonds','2_of_Dimondonds','3_of_Dimondonds','4_of_Dimondonds','5_of_Dimondonds','6_of_Dimondonds','7_of_Dimondonds','8_of_Dimondonds',
-            '9_of_Dimondonds','10_of_Dimondonds','Jack_of_Dimondonds','Queen_of_Dimondonds','King_of_Dimondonds','Ace_of_Clubs','2_of_Clubs','3_of_Clubs','4_of_Clubs','5_of_Clubs',
+            'Queen_of_Hearts','King_of_Hearts','Ace_of_Dimonds','2_of_Dimonds','3_of_Dimonds','4_of_Dimonds','5_of_Dimonds','6_of_Dimonds','7_of_Dimonds','8_of_Dimonds',
+            '9_of_Dimonds','10_of_Dimonds','Jack_of_Dimonds','Queen_of_Dimonds','King_of_Dimonds','Ace_of_Clubs','2_of_Clubs','3_of_Clubs','4_of_Clubs','5_of_Clubs',
             '6_of_Clubs','7_of_Clubs','8_of_Clubs','9_of_Clubs','10_of_Clubs','Jack_of_Clubs','Queen_of_Clubs','King_of_Clubs']
+avaliable=cardOptions
 def cardDeck():
     f = open('blenderScript.txt', 'a')
     #f.truncate(0)
     for i in range (0,len(avaliable)):
-        print("bpy.context.collection.objects['"+avaliable[i]+"'].rotation_euler=(math.radians( 90 ),0,0)")
-        print("bpy.context.collection.objects['"+avaliable[i]+"'].location=(0.73164,-1.2662 ,",(i*CardWidth)+CardWidth/2,")")
+        #print("bpy.context.collection.objects['"+avaliable[i]+"'].rotation_euler=(math.radians( 90 ),0,0)")
+        #print("bpy.context.collection.objects['"+avaliable[i]+"'].location=(0.73164,-1.2662 ,",(i*CardWidth)+CardWidth/2,")")
         f.write("bpy.context.collection.objects['")
         f.write(avaliable[i])
         f.write("'].rotation_euler=(math.radians( 90 ),0,0)\n")
@@ -76,7 +75,7 @@ def cardDeck():
     f.close()
         
 def randomCard():
-    cardChoice2 = random.randint(0,len(cardOptionsLarge)-1)
+    cardChoice2 = random.randint(0,len(cardOptions)-1)
     cardChoice=random.randint(0,len(avaliable)-1)
     cardsChecked=[]
 
@@ -89,6 +88,13 @@ def randomCard():
         
 def chooseAngles(num):
     anglesChoosen=[]
+    different=input("If you like to choose each angle please PRESS 1 or if you would like the same angle for ever card PRESS 2")
+    if different== "2":
+        angle=int(input("enter the angle that this card is at: "))
+        for i in range(0,num):
+            anglesChoosen.append(angle)
+        return anglesChoosen,num
+        
     for i in range(0,num):
         angle=int(input("enter the angle that this card is at: "))
         anglesChoosen.append(angle)
@@ -113,6 +119,7 @@ def Z_location(i,card, Last_Angle,Height_of_Last_Card, start_Position,Opposite,a
         LeftDistance=-LeftDistance
     if (Height_of_Last_Card!=1000 and Opposite==False):
         pointDistance.append(LeftDistance*2)
+        first_card_last_row=LeftDistance*2 #just added!!!
         Left_Card_Locations.append(start_Position+Height_of_Last_Card*math.tan(Last_Angle))
         if (Height_of_Last_Card>Height_of_Current_Card):
             LeftDistance=LeftDistance+(math.tan(Last_Angle)*Height_of_Current_Card - (math.tan(Last_Angle)*Height_of_Last_Card)/2)
@@ -140,8 +147,8 @@ def Z_location(i,card, Last_Angle,Height_of_Last_Card, start_Position,Opposite,a
 
     f = open('blenderScript.txt', 'a')
     #f.truncate(0)
-    print("bpy.context.collection.objects['"+card+"'].rotation_euler=(math.radians(",angle,"),0,0)")
-    print("bpy.context.collection.objects['"+card+"'].location=(0,",Next_Start_Position,",",Z_Distance,")")
+    #print("bpy.context.collection.objects['"+card+"'].rotation_euler=(math.radians(",angle,"),0,0)")
+    #print("bpy.context.collection.objects['"+card+"'].location=(0,",Next_Start_Position,",",Z_Distance,")")
     f.write("bpy.context.collection.objects['")
     f.write(card)
     f.write("'].rotation_euler=(math.radians(")
@@ -169,7 +176,7 @@ def Across(anglesChoosen,numCards):
     Last_Angle=0
     for i in range(0,using):
         if(i==0 ):
-            location_from_Y=0
+            location_from_Y=first_card_last_row #just added was 0
         if(i%2==0 ):
             Last_Angle,Height_of_Card,location_from_Y= Z_location(i//2,randomCard(),Last_Angle,Height_of_Card,location_from_Y,True,anglesChoosen[i])
         else :
@@ -213,8 +220,8 @@ def flat_Cards():
         else:
             angle_F=90
         card=randomCard()
-        print("bpy.context.collection.objects['"+card+"'].rotation_euler=(math.radians(",angle_F,"),0,0)")
-        print("bpy.context.collection.objects['"+card+"'].location=(0,",Left_Card_Locations[i]+pointDistance[i]/2,",",Z_Distance_F_Cards[i],")")
+        #print("bpy.context.collection.objects['"+card+"'].rotation_euler=(math.radians(",angle_F,"),0,0)")
+        #print("bpy.context.collection.objects['"+card+"'].location=(0,",Left_Card_Locations[i]+pointDistance[i]/2,",",Z_Distance_F_Cards[i],")")
         f = open('blenderScript.txt', 'a')
         #f.truncate(0)
         f.write("bpy.context.collection.objects['")
@@ -273,10 +280,10 @@ def standing_cards(choice):
     return int(total_standing)
 
 total_standing=standing_cards(choice)        
-print(totalCards)
-print(total_standing)
-print(total_flat)
-print("The Blender Code is:\n\n")
+print("This card tower will have: "+str(totalCards)+" Cards")
+#print(total_standing)
+#print(total_flat)
+#print("The Blender Code is:\n\n")
 angles,numCards=chooseAngles(int(total_standing))
 Across(angles,choice)
 

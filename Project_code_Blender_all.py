@@ -2,6 +2,7 @@ import random
 import math
 import subprocess
 import sys
+import bpy
 
 CardHeight=0.89
 CardLength=0.64
@@ -20,29 +21,6 @@ first_card_last_row=0 #just addedddd!!!
 levelTrack=0
 last_Card_Added="8_of_Dimonds"
 
-f = open('blenderScript.txt', 'w')
-#f.truncate(0) # need '0' when using r+
-f.write("import bpy\n")
-f.write("import math\n")
-f.close()
-
-def run_blender():
-    python_script2="blenderScript2.py"
-    get_location()
-    f = open('blenderScript.txt', 'a')
-    # Assuming the simulation is controlled via some operator or function in Blender
-    # Example: if you're using physics simulation, this could be something like:
-    f.write("bpy.ops.screen.animation_play()\n")  # Start animation (or start your simulation)
-    f.close()
-    # Path to Blender executable on macOS
-    blender_path = "/Applications/Blender.app/Contents/MacOS/Blender"
-    blend_file = "cardSimulation_cardsDesigned.blender.blend"
-    python_script = "blenderScript.txt"
-    # Construct the command to run Blender in the background with the Python script
-    # Running Blender from the terminal using subprocess
-    subprocess.run([blender_path, blend_file, "-P", python_script, "-P", python_script])
-    
-    
 
 def reset():
     global avaliable
@@ -63,7 +41,6 @@ def reset():
     Left_Card_Locations.clear()
     global choice
     choice=0
-    
     global levelTrack
     levelTrack=0
 
@@ -77,17 +54,10 @@ cardOptions=['Ace_of_Spades','2_of_Spades','3_of_Spades','4_of_Spades','5_of_Spa
             '6_of_Clubs','7_of_Clubs','8_of_Clubs','9_of_Clubs','10_of_Clubs','Jack_of_Clubs','Queen_of_Clubs','King_of_Clubs']
 avaliable=cardOptions.copy()
 def cardDeck():
-    f = open('blenderScript.txt', 'a')
     for i in range (0,len(avaliable)):
-        f.write("bpy.context.collection.objects['")
-        f.write(avaliable[i])
-        f.write("'].rotation_euler=(math.radians( 90 ),0,0)\n")
-        f.write("bpy.context.collection.objects['")
-        f.write(avaliable[i])
-        f.write("'].location=(0.73164,-1.2662 ,")
-        f.write(str((i*CardWidth)+CardWidth/2))
-        f.write(")\n")
-    f.close()
+        bpy.context.collection.objects[avaliable[i]].rotation_euler=(math.radians( 90 ),0,0)
+        bpy.context.collection.objects[avaliable[i]].location=(0.73164,-1.2662 ,i*CardWidth+CardWidth/2)
+
         
 def randomCard():
     cardChoice2 = random.randint(0,len(cardOptions)-1)
@@ -156,20 +126,8 @@ def Z_location(i,card, Last_Angle,Height_of_Last_Card, start_Position,Opposite,a
     Next_Start_Position=LeftDistance+start_Position
     global last_Card_Added
     last_Card_Added=card
-    f = open('blenderScript.txt', 'a')
-    f.write("bpy.context.collection.objects['")
-    f.write(card)
-    f.write("'].rotation_euler=(math.radians(")
-    f.write(str(angle))
-    f.write("),0,0)\n")
-    f.write("bpy.context.collection.objects['")
-    f.write(card)
-    f.write("'].location=(0,")
-    f.write(str(Next_Start_Position))
-    f.write(",")
-    f.write(str(Z_Distance))
-    f.write(")\n")
-    f.close()
+    bpy.context.collection.objects[card].rotation_euler=(math.radians(angle),0,0)
+    bpy.context.collection.objects[card].location=(0,Next_Start_Position,Z_Distance)
     return angleRadians,Height_of_Current_Card,Next_Start_Position
    
 def Across(anglesChoosen,Cards_Per_level,numCards,levelTrack):
@@ -203,14 +161,13 @@ def Across(anglesChoosen,Cards_Per_level,numCards,levelTrack):
     cardDeck()
      
     reset()
-    run_blender()
-    answer=input("want to run again? (press 1 for YES)")
-    if(answer=="1"):
-        this=int(input("is this entering (PRESS 1)or using set data(PRESS 2)"))
-        if this==1:
-            start()
-        else:
-            no_input_needed()
+    ##answer=input("want to run again? (press 1 for YES)")
+    #if(answer=="1"):
+        #this=int(input("is this entering (PRESS 1)or using set data(PRESS 2)"))
+        #if this==1:
+            #start()
+        #else:
+            #no_input_needed()
 
         
 def flat_Cards():
@@ -225,20 +182,8 @@ def flat_Cards():
         card=randomCard()
         global last_Card_Added
         last_Card_Added=card
-        f = open('blenderScript.txt', 'a')
-        f.write("bpy.context.collection.objects['")
-        f.write(card)
-        f.write("'].rotation_euler=(math.radians(")
-        f.write(str(angle_F))
-        f.write("),0,0)\n")
-        f.write("bpy.context.collection.objects['")
-        f.write(card)
-        f.write("'].location=(0,")
-        f.write(str(Left_Card_Locations[i]+pointDistance[i]/2))
-        f.write(",")
-        f.write(str(Z_Distance_F_Cards[i]))
-        f.write(")\n")
-        f.close()
+        bpy.context.collection.objects[card].rotation_euler=(math.radians(angle_F),0,0)
+        bpy.context.collection.objects[card].location=(0,Left_Card_Locations[i]+pointDistance[i]/2,Z_Distance_F_Cards[i])
         
         if len(avaliable)<=0:
             return
@@ -271,22 +216,16 @@ def standing_cards(choice):
 
 
 
-def get_location():
-    f = open('blenderScript2.py', 'w')
-    f.write("import bpy\n")
-    f.write("def get_location(frame):\n")
-    f.write("    scene=bpy.context.scene\n")
-    f.write("    scene.frame_set(frame)\n")
-    f.write("    depsgraph = bpy.context.evaluated_depsgraph_get()\n")
-    f.write("    obj=bpy.data.objects['")
-    f.write(last_Card_Added)
-    f.write("'].evaluated_get(depsgraph)\n")
-    f.write("    current_location=obj.matrix_world.translation.z\n")
-    f.write("    return current_location\n")
-    f.write("print(get_location(0))\n")
-    f.write("print(get_location(10))\n")
-    f.write("print(get_location(100))\n")
-    f.close()
+def get_location(frame):
+    scene=bpy.context.scene
+    scene.frame_set(frame)
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    obj=bpy.data.objects[last_Card_Added].evaluated_get(depsgraph)
+    current_location=obj.matrix_world.translation.z
+    return current_location
+    print(get_location(0))
+    print(get_location(10))
+    print(get_location(100))
 
 def start():
     totalCards=0
@@ -322,6 +261,7 @@ def start():
         total_standing+=Cards_Per_level[n]
         for z in range(0,Cards_Per_level[n]-1):
             Height_F_Cards.append(0)
+            print(Height_F_Cards)
             Z_Distance_F_Cards.append(0)
     angles=chooseAngles(int(total_standing))
     Across(angles,Cards_Per_level,Cards_Per_level[levelTrack],levelTrack)
@@ -335,10 +275,11 @@ def no_input_needed():
     levelTrack=0
     angles=loadAngles(int(6))
     Across(angles,[4,2],4,0)
+    reset()
 
 
-
-this=int(input("is this entering (PRESS 1)or using set data(PRESS 2)"))
+#this=int(input("is this entering (PRESS 1)or using set data(PRESS 2)"))
+this=2
 if this==1:
     start()
 else:
