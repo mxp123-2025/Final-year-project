@@ -25,8 +25,8 @@ lastLevelDifference=0
 lastLevelStart=0
 
 def startPage():
-    f = open('blenderScript.txt', 'w')
-    #f.truncate(0) # need '0' when using r+
+    f = open('blenderScript.txt', 'r+')
+    f.truncate(0) # need '0' when using r+
     f.write("import bpy\n")
     f.write("import math\n")
     f.close()
@@ -38,7 +38,6 @@ def run_blender():
     # Assuming the simulation is controlled via some operator or function in Blender
     # Example: if you're using physics simulation, this could be something like:
     #f.write("bpy.ops.screen.animation_play()\n")  # Start animation 
-    f.write("import bpy\n")
     #f.write("for x in range(0,101):\n")
     f.write("for x in range(0,")
     f.write(str(frame+1))
@@ -350,9 +349,7 @@ def get_location():
     f.write('f.close()')
 
 def start2():
-    startPage()
     totalCards=0
-    
     total_flat=0
     print(len(cardOptions))
     Cards_Per_level=[]
@@ -377,7 +374,6 @@ def start2():
             Cards_Per_level.append(choice)
             totalCards+=choice+choice/2-1
             choice-=2
-
     total_standing=0
     print("This card tower will have: ",totalCards," Cards")
     for n in range (0, len(Cards_Per_level)):
@@ -432,7 +428,6 @@ def optimise(numCards,Cards_Per_level):
     for generation in range(1):####change number back to 50
         solutions = []
         for _ in range(optimizer.population_size):
-            startPage()
             global Height_F_Cards
             global Z_Distance_F_Cards
             for x in range (numCards):
@@ -456,6 +451,7 @@ def optimise(numCards,Cards_Per_level):
             solutions.append((x, value))
             results.append(value)
             usedAngles.append(angle)
+            startPage()
         optimizer.tell(solutions)
     #for x in range (numCards):
         #Height_F_Cards.append(0)
@@ -484,6 +480,7 @@ def optimise(numCards,Cards_Per_level):
     
 this=""
 while this!="X":
+    startPage()
     global frame
     frame=int(input("what frame would you like to test to(if tester please put 100 or 250)"))    
     optimising=True
@@ -497,5 +494,6 @@ while this!="X":
         optimise(14,[8,4,2])
         #optimise(8,[6,2])
         #optimise(26,[12,8,4,2])
+    this=input("would you like to comtinue: ")
     
     
