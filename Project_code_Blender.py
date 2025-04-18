@@ -5,6 +5,8 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from cmaes import CMA
+import datetime
+import time
 
 CardHeight=0.89
 CardLength=0.64
@@ -25,46 +27,16 @@ lastLevelDifference=0
 lastLevelStart=0
 
 def startPage():
-    f = open('blenderScript.txt', 'r+')
-    f.truncate(0) # need '0' when using r+
+    f = open('blenderScript.txt', 'w')
     f.write("import bpy\n")
     f.write("import math\n")
     f.close()
 
 def run_blender():
-    python_script2="blenderScript2.py"
     get_location()
     f = open('blenderScript.txt', 'a')
-    # Assuming the simulation is controlled via some operator or function in Blender
-    # Example: if you're using physics simulation, this could be something like:
-    #f.write("bpy.ops.screen.animation_play()\n")  # Start animation 
-    #f.write("for x in range(0,101):\n")
-    f.write("for x in range(0,")
-    f.write(str(frame+1))
-    f.write("):\n")
-    f.write("    scene=bpy.context.scene\n")
-    f.write("    scene.frame_set(x)\n")
-    f.write("def get_location(frame):\n")
-    f.write("    scene=bpy.context.scene\n")
-    f.write("    scene.frame_set(frame)\n")
-    f.write("    depsgraph = bpy.context.evaluated_depsgraph_get()\n")
-    f.write("    obj=bpy.data.objects['")
-    f.write(last_Card_Added)
-    f.write("'].evaluated_get(depsgraph)\n")
-    f.write("    current_location=obj.matrix_world.translation.z\n")
-    f.write("    return current_location\n")
-    f.write("f=open('result.txt', 'w')\n")
-    #f.write("f.write(str(get_location(0)))\n")
-    #f.write('f.write(",")\n')
-    #f.write('f.write(str(get_location(10)))\n')
-    #f.write('f.write(",")\n')
-    #f.write('f.write(str(get_location(100)))\n')
-    f.write("f.write(str(get_location(")
-    f.write(str(frame))
-    f.write(')))\n')
-    f.write('f.close()\n')
     if optimising==True:
-        f.write('bpy.ops.wm.quit_blender()\n')###########needed!!!
+        f.write('bpy.ops.wm.quit_blender()\n')
     else:
         f.write("scene.frame_set(0)\n")
         f.write("bpy.ops.screen.animation_play()\n")#Start animation
@@ -260,10 +232,7 @@ def Across(anglesChoosen,Cards_Per_level,numCards,levelTrack):
     if(numCards-2>0):
         levelTrack+=1
         Across(anglesChoosen[numCards:],Cards_Per_level,Cards_Per_level[levelTrack],levelTrack)
-    cardDeck()
-     
-    reset()
-    run_blender()
+
 
 
         
@@ -326,9 +295,10 @@ def standing_cards(choice):
 
 
 def get_location():
-    f = open('blenderScript2.py', 'w')
-    f.write("import bpy\n")
-    f.write("for x in range(0,101):\n")
+    f = open('blenderScript.txt', 'a')
+    f.write("for x in range(0,")
+    f.write(str(frame+1))
+    f.write("):\n")
     f.write("    scene=bpy.context.scene\n")
     f.write("    scene.frame_set(x)\n")
     f.write("def get_location(frame):\n")
@@ -341,12 +311,10 @@ def get_location():
     f.write("    current_location=obj.matrix_world.translation.z\n")
     f.write("    return current_location\n")
     f.write("f=open('result.txt', 'w')\n")
-    #f.write("f.write(str(get_location(0)))\n")
-    #f.write('f.write(",")\n')
-    #f.write('f.write(str(get_location(10)))\n')
-    #f.write('f.write(",")\n')
-    f.write('f.write(str(get_location(100)))\n')
-    f.write('f.close()')
+    f.write('f.write(str(get_location(')
+    f.write(str(frame))
+    f.write(')))\n')
+    f.write('f.close()\n')
 
 def start2():
     totalCards=0
@@ -383,6 +351,9 @@ def start2():
             Z_Distance_F_Cards.append(0)
     angles=chooseAngles(int(total_standing))
     Across(angles,Cards_Per_level,Cards_Per_level[levelTrack],levelTrack)
+    cardDeck()
+    run_blender()
+    reset()
     
 def start():
     totalCards=0
@@ -421,11 +392,13 @@ def start():
     optimise(int(totalCards),Cards_Per_level)
 
 def optimise(numCards,Cards_Per_level):
-    optimizer = CMA(mean=np.zeros(numCards), sigma=1.3)
+    startTime=time.time()
+    global optimising
+    optimizer = CMA(mean=np.zeros(2), sigma=1.3)
     angles=[]
     results=[]
     usedAngles=[]
-    for generation in range(1):####change number back to 50
+    for generation in range(50):
         solutions = []
         for _ in range(optimizer.population_size):
             global Height_F_Cards
@@ -436,46 +409,67 @@ def optimise(numCards,Cards_Per_level):
             levelTrack=0
             angles.clear()
             x = optimizer.ask()
-            angle=x[1]
+            angle1=x[0]
+            angle2=x[1]
+            if angle1<0:
+                angle1=-angle1
+            if angle2<0:
+                angle2=-angle2
             for y in range(0,numCards):
                 #angles.append(x[y])
-                angles.append(angle)
-            print("we're on generation: "+str(generation)+" Part: ",_)
+                if y%2==0:
+                    angles.append(angle1)
+                else:
+                    angles.append(angle2)
+            if (generation==0 and _==0) or (generation==25 and _==optimizer.population_size-1)or (generation==45 and _==optimizer.population_size-1):
+                optimising=False       
             Across(angles,Cards_Per_level,Cards_Per_level[levelTrack],levelTrack)
-            reset()
+            cardDeck()
+            run_blender()
+            optimising=True
             f=open("result.txt","r")
-            first_line = float(f.readline())
-            print("angle choosen was:",angle)
-            print("The height at frame ",frame," is: ",first_line)
-            value = first_line
+            value = float(f.readline())
+            if (generation==0 and _==0) or (generation==25 and _==optimizer.population_size-1)or (generation==49 and _==optimizer.population_size-1):
+                print("\nWe're on generation: "+str(generation)+" Part: ",_)
+                print("angles choosen were:",angle1," and ",angle2)
+                print("The height at frame ",frame," is: ",value,"\n")
+            elif _==0:
+                print("We're on generation: "+str(generation))
             solutions.append((x, value))
             results.append(value)
-            usedAngles.append(angle)
+            usedAngles.append(angle1+angle2)
             startPage()
+            reset()
         optimizer.tell(solutions)
-    #for x in range (numCards):
-        #Height_F_Cards.append(0)
-        #Z_Distance_F_Cards.append(0)
-    #levelTrack=0    
-    #optimising=False
-    #Across(angles,Cards_Per_level,Cards_Per_level[levelTrack],levelTrack)
+        
+    endTime=time.time()
+    print("this test ran for: ",(endTime-startTime)/60,"minutes",)
     
     xpoints=np.array(usedAngles)
     ypoints=np.array(results)
-    plt.plot(ypoints)
-    plt.xlabel("Iteration")
-    plt.ylabel("Height at frame "+str(frame)+"(meters)")
+
+    fig, axs = plt.subplots(3, 1, constrained_layout=True)
+    
+
+    ### graph to demonstrate the relationship between time and height measured ###
+    axs[0].plot(ypoints)
+    axs[0].set_xlabel("Iteration")
+    axs[0].set_ylabel("Height at frame "+str(frame)+"(meters)")
+    axs[0].set_title('Graph to demonstrate the relationship between time and height measured', fontsize=10)
+
+    ### graph to demonstrate the relationship between degrees choosen and height measured ###
+    axs[1].plot(xpoints,ypoints,"o")
+    axs[1].set_xlabel("Angle between cards (Degrees)")
+    axs[1].set_ylabel("Height at frame "+str(frame)+"(meters)")
+    axs[1].set_title('Graph to demonstrate the relationship between degrees choosen and height measured', fontsize=10)
+
+    ### graph to demonstrate the relationship between time and degree choosen ###
+    axs[2].plot(xpoints)
+    axs[2].set_xlabel("Iteration")
+    axs[2].set_ylabel("Angle between cards (Degrees)")
+    axs[2].set_title('Graph to demonstrate the relationship between time and degree choosen', fontsize=10)
     plt.show()
     plt.close()
-    plt.plot(xpoints,ypoints,"o")
-    plt.xlabel("Angle used (Degrees)")
-    plt.ylabel("Height at frame "+str(frame)+"(meters)")
-    plt.show()
-    plt.close()
-    plt.plot(xpoints)
-    plt.xlabel("Iteration")
-    plt.ylabel("Angle used (Degrees)")
-    plt.show()
 
     
 this=""
@@ -491,9 +485,10 @@ while this!="X":
     if this=="2":
         start()
     if this=="3":
+        optimise(2,[2])
+        optimise(8,[6,2])
         optimise(14,[8,4,2])
-        #optimise(8,[6,2])
-        #optimise(26,[12,8,4,2])
+        optimise(26,[12,8,4,2])
     this=input("would you like to comtinue: ")
     
     
