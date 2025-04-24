@@ -104,15 +104,23 @@ def randomCard():
         
 def chooseAngles(num):
     anglesChoosen=[]
-    different=input("If you like to choose each angle please PRESS 1 or if you would like the same angle for ever card PRESS 2")
-    if different== "2":
+    different=input("If you like to choose each angle please ENTER 1, if you wouuld like to choose two angles to be set to every pair of cards please ENTER 2,if you would like the same angle for ever card ENTER 3")
+    if different== "3":
         angle=float(input("enter the angle that this card is at: "))
         for i in range(0,num):
             anglesChoosen.append(angle)
         return anglesChoosen
-        
+    elif different=="2":
+        angle=float(input("enter the angle that this card is at: "))
+        angle2=float(input("enter the angle that this card is at: "))
+        for i in range(0,num):
+            if i%2==0:
+                anglesChoosen.append(angle)
+            else:
+                anglesChoosen.append(angle2)
+    return anglesChoosen        
     for i in range(0,num):
-        angle=int(input("enter the angle that this card is at: "))
+        angle=float(input("enter the angle that this card is at: "))
         anglesChoosen.append(angle)
     return anglesChoosen
 
@@ -317,45 +325,14 @@ def get_location():
     f.write('f.close()\n')
 
 def start2():
-    totalCards=0
-    total_flat=0
-    print(len(cardOptions))
-    Cards_Per_level=[]
-    choice1=int(input("Do you want to make a normal card tower (PRESS 1) or create something UNIQUE choose the amount of cards per level (PRESS 2)?"))
-    if choice1==2:
-        print("Choose your cards for each row:")
-        numPairs=2
-        level=0
-        while(numPairs>1):
-            numPairs=int(input("how many cards on next level?"))
-            if numPairs>0:
-                Cards_Per_level.append(numPairs*2)
-                totalCards+=numPairs*2+numPairs-1
-                level+=1
-    else:
-        choice=2*int(input("How many pairs of cards on the bottom level"))
-        while(choice>len(cardOptions)):
-            print("we dont have enough cards for that")
-            choice=int(input("how many pairs of cards are you using for the bottom row"))
-            choice=choice*2
-        while(choice>=1):
-            Cards_Per_level.append(choice)
-            totalCards+=choice+choice/2-1
-            choice-=2
-    total_standing=0
-    print("This card tower will have: ",totalCards," Cards")
-    for n in range (0, len(Cards_Per_level)):
-        total_standing+=Cards_Per_level[n]
-        for z in range(0,Cards_Per_level[n]-1):
-            Height_F_Cards.append(0)
-            Z_Distance_F_Cards.append(0)
+    total_standing,Cards_Per_level=starts_Core()
     angles=chooseAngles(int(total_standing))
     Across(angles,Cards_Per_level,Cards_Per_level[levelTrack],levelTrack)
     cardDeck()
     run_blender()
     reset()
     
-def start():
+def starts_Core():
     totalCards=0
     total_flat=0
     print(len(cardOptions))
@@ -389,62 +366,89 @@ def start():
         for z in range(0,Cards_Per_level[n]-1):
             Height_F_Cards.append(0)
             Z_Distance_F_Cards.append(0)
-    optimise(int(totalCards),Cards_Per_level)
+    return(total_standing,Cards_Per_level)
+
+def start():
+    total_standing,Cards_Per_level=starts_Core()
+    numAngles=input("Same angle generated for each card(PRESS 1) otherwise (PRESS 2)")
+    if numAngles=="2":
+        optimise(int(total_standing),Cards_Per_level)
+    else:
+        optimise2(int(total_standing),Cards_Per_level)
 
 def optimise(numCards,Cards_Per_level):
     startTime=time.time()
     global optimising
-    optimizer = CMA(mean=np.zeros(2), sigma=1.3)
+    num=2
+    numAngles=input("Same angle bewteen pairs of cards(PRESS 1) or an angle for each card(PRESS 2)")
+    print("There will be 50 generations in total(0-49)\n")
+    if numAngles=="2":
+        num=numCards
+    optimizer = CMA(mean=np.zeros(num), sigma=1.3)
     angles=[]
     results=[]
     usedAngles=[]
     for generation in range(50):
         solutions = []
         for _ in range(optimizer.population_size):
-            global Height_F_Cards
-            global Z_Distance_F_Cards
-            for x in range (numCards):
-                Height_F_Cards.append(0)
-                Z_Distance_F_Cards.append(0)
-            levelTrack=0
             angles.clear()
             x = optimizer.ask()
-            angle1=x[0]
-            angle2=x[1]
-            if angle1<0:
-                angle1=-angle1
-            if angle2<0:
-                angle2=-angle2
+            if numAngles=="2":
+                angle1=x[0]
+                angle2=x[1]
+                if angle1<0:
+                    angle1=-angle1
+                if angle2<0:
+                    angle2=-angle2
+                angle=angle1+angle2
             for y in range(0,numCards):
-                #angles.append(x[y])
-                if y%2==0:
-                    angles.append(angle1)
+                if numAngles=="3":
+                    angles.append(x[y])
+                if numAngles=="2":
+                    if y%2==0:
+                        angles.append(angle1)
+                    else:
+                        angles.append(angle2)
                 else:
-                    angles.append(angle2)
-            if (generation==0 and _==0) or (generation==25 and _==optimizer.population_size-1)or (generation==45 and _==optimizer.population_size-1):
-                optimising=False       
-            Across(angles,Cards_Per_level,Cards_Per_level[levelTrack],levelTrack)
-            cardDeck()
+                    angle=x[0]
+                    for y in range(0,numCards):
+                        angles.append(angle)        
+            if generation==49 and _==optimizer.population_size-1:
+                optimising=False
+                endTime=time.time()
+            value=Get_Value(angles,numCards,Cards_Per_level)
             run_blender()
             optimising=True
-            f=open("result.txt","r")
-            value = float(f.readline())
-            if (generation==0 and _==0) or (generation==25 and _==optimizer.population_size-1)or (generation==49 and _==optimizer.population_size-1):
+            if generation==49 and _==optimizer.population_size-1:
                 print("\nWe're on generation: "+str(generation)+" Part: ",_)
-                print("angles choosen were:",angle1," and ",angle2)
-                print("The height at frame ",frame," is: ",value,"\n")
+                if numAngles=="2":
+                    print("angles choosen were:",angles[0]," and ",angles[1])
+                if numAngles=="3":
+                    print("angles choosen were:",angles)
+                else:
+                    print("angle choosen was:",angles[0])
+                print("The height at frame ",frame," is: ",value,"\n")    
             elif _==0:
                 print("We're on generation: "+str(generation))
-            solutions.append((x, value))
+            solutions.append((x, -value))
             results.append(value)
-            usedAngles.append(angle1+angle2)
+            if numAngles =="2"or "1":
+                usedAngles.append(angle)
+            else:
+                total=0
+                for x in range(0,numCards):
+                    total+=numCards[x]
+                usedAngel.append(total/numCards)
+                
             startPage()
             reset()
         optimizer.tell(solutions)
+    graphs(usedAngles,results)
         
-    endTime=time.time()
-    print("this test ran for: ",(endTime-startTime)/60,"minutes",)
-    
+
+    print("this test ran for: ",(endTime-startTime)//60,"minutes and ",(endTime-startTime)%60," seconds")
+
+def graphs(usedAngles,results):
     xpoints=np.array(usedAngles)
     ypoints=np.array(results)
 
@@ -470,25 +474,113 @@ def optimise(numCards,Cards_Per_level):
     axs[2].set_title('Graph to demonstrate the relationship between time and degree choosen', fontsize=10)
     plt.show()
     plt.close()
-
     
+def optimise2(numCards,Cards_Per_level):
+    global optimising
+    optimising=True
+    startTime=time.time()
+    highestAngle=0
+    highestValue=0
+    angles=[]
+    usedAngles=[]
+    results=[]
+    anglesBest=[]
+    for x in range (1,90):
+        angles.clear()
+        usedAngles.append(x)
+        for z in range(0,numCards):
+            angles.append(x)
+        total=0
+        for p in range(0,5):
+            total+=Get_Value(angles,numCards,Cards_Per_level)
+        value=total/5
+        results.append(value)
+        if value>=highestValue:
+            highestValue=value
+            highestAngle=x
+            anglesBest=angles
+        print(x,",",value)
+        
+    newhighestValue=highestValue
+    newhighestAngle=highestAngle
+    numb=0.1
+    continu="yes"
+    count=0
+    while continu!="stop":
+        count+=1
+        LasthighestValue=newhighestValue
+        for y in range(1,10):
+            angle=highestAngle+y*numb
+            angles.clear() 
+            usedAngles.append(angle)
+            for z in range(0,numCards):
+                angles.append(angle)
+            value=Get_Value(angles,numCards,Cards_Per_level)
+            print("Using the angle:",angle,", the  for height at frame",frame,"was: ",value)
+            results.append(value)
+            if value>=newhighestValue:
+                newhighestValue=value
+                newhighestAngle=angle
+                anglesBest=angles  
+        if LasthighestValue==newhighestValue or count==5:
+            x=10
+            continu="stop"
+        numb=numb/10
+        highestValue=newhighestValue
+        highestAngle=newhighestAngle
+
+    optimising=False
+    results.append(Get_Value(anglesBest,numCards,Cards_Per_level))
+    usedAngles.append(highestAngle)
+    endTime=time.time()
+    print("this test ran for: ",(endTime-startTime)//60,"minutes and ",int((endTime-startTime)%60)," seconds")
+    print("Best angle was:", highestAngle)
+    print("the Height of last card frame ",frame,": ",highestValue)
+    graphs(usedAngles,results)
+        
+def Get_Value(angles,numCards,Cards_Per_level):
+    global Height_F_Cards
+    global Z_Distance_F_Cards
+    for y in range (numCards):
+        Height_F_Cards.append(0)
+        Z_Distance_F_Cards.append(0)
+    levelTrack=0  
+    Across(angles,Cards_Per_level,Cards_Per_level[levelTrack],levelTrack)
+    cardDeck()
+    run_blender()
+    startPage()
+    reset()
+    f=open("result.txt","r")
+    value = float(f.readline())
+    f.close()
+    return(value)
+        
 this=""
-while this!="X":
+while this.upper()!="X":
     startPage()
     global frame
-    frame=int(input("what frame would you like to test to(if tester please put 100 or 250)"))    
+    frame=int(input("What frame would you like to test to(if tester please put 100 or 250)\n"))    
     optimising=True
-    this=input("is this entering (PRESS 1), using entering with inputed angles(PRESS 2), using set data(PRESS 3)")
+    this=input("Is this entering (PRESS 1), using entering with optimised angles(PRESS 2), using set data(PRESS 3)\n")
     if this=="1":
         optimising=False
         start2()
     if this=="2":
         start()
     if this=="3":
-        optimise(2,[2])
-        optimise(8,[6,2])
-        optimise(14,[8,4,2])
-        optimise(26,[12,8,4,2])
-    this=input("would you like to comtinue: ")
+        this=input("Gerating one angle for all cards(PRESS 1), generating more than angle(PRESS 2) ")
+        if this=="1":
+            optimise2(2,[2])
+            optimise2(6,[4,2])
+            optimise2(8,[6,2])
+            optimise2(14,[8,4,2])
+            optimise2(26,[12,8,4,2])
+        if this=="2":
+            optimise(2,[2])
+            optimise(6,[4,2])
+            optimise(8,[6,2])
+            optimise(14,[8,4,2])
+            optimise(26,[12,8,4,2])
+    this=input("Would you like to comtinue(Type 'X' if no)? ")
     
     
